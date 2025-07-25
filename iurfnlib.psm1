@@ -37,6 +37,38 @@ function replaceinword { # Platzhalter
 	$doc.Content.Find.Execute($findText, $MatchCase, $MatchWholeWord, $MatchWildcards, $MatchSoundsLike, $MatchAllWordForms, $Forward, $Wrap, $Format, $replacewithText, $Replace)
 }
 
+function fillspaceholderinword { # Bausteine mit Platzhaltern
+	param (
+		[string]$findText,
+		[string]$pathToInsertableTemplate
+	)
+	$pathToInsertableTemplate = Resolve-Path -Path $pathToInsertableTemplate
+	$msword = [System.Runtime.Interopservices.Marshal]::GetActiveObject("Word.Application")
+	$activeDocument = $msword.ActiveDocument
+	$insertableTemplate = $msword.Documents.Open($pathToInsertableTemplate)
+	
+	# Find the placeholder in the active document
+	$findRange = $activeDocument.Content.Duplicate
+	$findRange.Find.ClearFormatting()
+	$findRange.Find.Text = $findText
+	$findRange.Find.MatchCase = $false
+	$findRange.Find.MatchWholeWord = $true
+	$findRange.Find.MatchWildcards = $false
+	$findRange.Find.MatchSoundsLike = $false
+	$findRange.Find.MatchAllWordForms = $false
+	$findRange.Find.Forward = $true
+	$findRange.Find.Wrap = 1 # wdFindContinue
+	
+	# Execute the find operation
+	if ($findRange.Find.Execute()) {
+		# Replace the found placeholder with the template content
+		$templateRange = $insertableTemplate.Content
+		$findRange.FormattedText = $templateRange.FormattedText
+	}
+	
+	$insertableTemplate.Close($false)
+}
+
 function Rubrumauslese () {
 	$msword = [Runtime.Interopservices.Marshal]::GetActiveObject('Word.Application')
 	$doc = $msword.ActiveDocument
