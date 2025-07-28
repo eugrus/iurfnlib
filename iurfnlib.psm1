@@ -46,10 +46,10 @@ function FillSpaceholderInWord { # Bausteine mit Platzhaltern
 	$msword = [System.Runtime.Interopservices.Marshal]::GetActiveObject("Word.Application")
 	$activeDocument = $msword.ActiveDocument
 	$insertableTemplate = $msword.Documents.Open($pathToInsertableTemplate)
-	
+
 	# Get template content once
 	$templateRange = $insertableTemplate.Content
-	
+
 	# Find and replace ALL occurrences of the placeholder
 	$findRange = $activeDocument.Content.Duplicate
 	$findRange.Find.ClearFormatting()
@@ -61,26 +61,27 @@ function FillSpaceholderInWord { # Bausteine mit Platzhaltern
 	$findRange.Find.MatchAllWordForms = $false
 	$findRange.Find.Forward = $true
 	$findRange.Find.Wrap = 1 # wdFindContinue
-	
+
 	# Execute the find operation in a loop to replace ALL occurrences
 	while ($findRange.Find.Execute()) {
-	    # Replace the found placeholder with the template content
-	    $findRange.FormattedText = $templateRange.FormattedText
-	    # Reset the range for the next search
-	    $findRange = $activeDocument.Content.Duplicate
-	    $findRange.Find.ClearFormatting()
-	    $findRange.Find.Text = $findText
-	    $findRange.Find.MatchCase = $false
-	    $findRange.Find.MatchWholeWord = $true
-	    $findRange.Find.MatchWildcards = $false
-	    $findRange.Find.MatchSoundsLike = $false
-	    $findRange.Find.MatchAllWordForms = $false
-	    $findRange.Find.Forward = $true
-	    $findRange.Find.Wrap = 1
+		# Replace the found placeholder with the template content
+		$findRange.FormattedText = $templateRange.FormattedText
+		# Reset the range for the next search
+		$findRange = $activeDocument.Content.Duplicate
+		$findRange.Find.ClearFormatting()
+		$findRange.Find.Text = $findText
+		$findRange.Find.MatchCase = $false
+		$findRange.Find.MatchWholeWord = $true
+		$findRange.Find.MatchWildcards = $false
+		$findRange.Find.MatchSoundsLike = $false
+		$findRange.Find.MatchAllWordForms = $false
+		$findRange.Find.Forward = $true
+		$findRange.Find.Wrap = 1
 	}
-	
+
 	$insertableTemplate.Close($false)
 }
+
 
 function Rubrumauslese () {
 	$msword = [Runtime.Interopservices.Marshal]::GetActiveObject('Word.Application')
@@ -104,4 +105,41 @@ function killheadlessword () {
 	Get-Process -Name WINWORD | Where-Object {
 			$_.MainWindowHandle -eq 0 -and $_.SessionId -eq $([System.Diagnostics.Process]::GetCurrentProcess().SessionId)
 		} | Stop-Process -Force
+}
+
+function FillFromJSON { # Platzhalter für kurze Eintragungen (bis 255 Zeichen) anhand JSON ersetzen
+
+	param(
+		[Parameter(Mandatory=$true)][string]$Selection,
+		[Parameter(Mandatory=$true)][string]$pathToJSON
+	)
+		
+	$json = Get-Content -Path $pathToJSON -Raw -Encoding UTF8 | ConvertFrom-Json
+
+	foreach ($entry in $json) {
+		$pl = $entry.PH.Trim()
+		$val = $entry.$Selection
+		if ($val) {
+			ReplaceInWord $pl $val
+		}
+	}
+}
+
+function FillFromFolder { # Längere Bausteine für einige Platzhalter aus einem Ordner holen
+	
+	param(
+		[Parameter(Mandatory=$true)][string]$Selection,
+		[Parameter(Mandatory=$true)][string]$Folder
+	)
+	
+	if (Test-Path "$Folder\$Selection") {
+		$files = Get-ChildItem -Path "$Folder\$Selection" -Include "*.docx", "*.rtf" -Recurse
+		
+		foreach ($file in $files) {
+			$fileName = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
+			$placeholder = "ph" + $fileName
+			
+			FillSpaceholderInWord $placeholder $file.FullName
+		}
+	}
 }
