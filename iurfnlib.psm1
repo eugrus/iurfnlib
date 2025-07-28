@@ -38,48 +38,48 @@ function replaceinword { # Platzhalter
 }
 
 function FillSpaceholderInWord { # Bausteine mit Platzhaltern
-param (
-[string]$findText,
-[string]$pathToInsertableTemplate
-)
-$pathToInsertableTemplate = Resolve-Path -Path $pathToInsertableTemplate
-$msword = [System.Runtime.Interopservices.Marshal]::GetActiveObject("Word.Application")
-$activeDocument = $msword.ActiveDocument
-$insertableTemplate = $msword.Documents.Open($pathToInsertableTemplate)
-
-# Get template content once
-$templateRange = $insertableTemplate.Content
-
-# Find and replace ALL occurrences of the placeholder
-$findRange = $activeDocument.Content.Duplicate
-$findRange.Find.ClearFormatting()
-$findRange.Find.Text = $findText
-$findRange.Find.MatchCase = $false
-$findRange.Find.MatchWholeWord = $true
-$findRange.Find.MatchWildcards = $false
-$findRange.Find.MatchSoundsLike = $false
-$findRange.Find.MatchAllWordForms = $false
-$findRange.Find.Forward = $true
-$findRange.Find.Wrap = 1 # wdFindContinue
-
-# Execute the find operation in a loop to replace ALL occurrences
-while ($findRange.Find.Execute()) {
-    # Replace the found placeholder with the template content
-    $findRange.FormattedText = $templateRange.FormattedText
-    # Reset the range for the next search
-    $findRange = $activeDocument.Content.Duplicate
-    $findRange.Find.ClearFormatting()
-    $findRange.Find.Text = $findText
-    $findRange.Find.MatchCase = $false
-    $findRange.Find.MatchWholeWord = $true
-    $findRange.Find.MatchWildcards = $false
-    $findRange.Find.MatchSoundsLike = $false
-    $findRange.Find.MatchAllWordForms = $false
-    $findRange.Find.Forward = $true
-    $findRange.Find.Wrap = 1
-}
-
-$insertableTemplate.Close($false)
+	param (
+	[string]$findText,
+	[string]$pathToInsertableTemplate
+	)
+	$pathToInsertableTemplate = Resolve-Path -Path $pathToInsertableTemplate
+	$msword = [System.Runtime.Interopservices.Marshal]::GetActiveObject("Word.Application")
+	$activeDocument = $msword.ActiveDocument
+	$insertableTemplate = $msword.Documents.Open($pathToInsertableTemplate)
+	
+	# Get template content once
+	$templateRange = $insertableTemplate.Content
+	
+	# Find and replace ALL occurrences of the placeholder
+	$findRange = $activeDocument.Content.Duplicate
+	$findRange.Find.ClearFormatting()
+	$findRange.Find.Text = $findText
+	$findRange.Find.MatchCase = $false
+	$findRange.Find.MatchWholeWord = $true
+	$findRange.Find.MatchWildcards = $false
+	$findRange.Find.MatchSoundsLike = $false
+	$findRange.Find.MatchAllWordForms = $false
+	$findRange.Find.Forward = $true
+	$findRange.Find.Wrap = 1 # wdFindContinue
+	
+	# Execute the find operation in a loop to replace ALL occurrences
+	while ($findRange.Find.Execute()) {
+	    # Replace the found placeholder with the template content
+	    $findRange.FormattedText = $templateRange.FormattedText
+	    # Reset the range for the next search
+	    $findRange = $activeDocument.Content.Duplicate
+	    $findRange.Find.ClearFormatting()
+	    $findRange.Find.Text = $findText
+	    $findRange.Find.MatchCase = $false
+	    $findRange.Find.MatchWholeWord = $true
+	    $findRange.Find.MatchWildcards = $false
+	    $findRange.Find.MatchSoundsLike = $false
+	    $findRange.Find.MatchAllWordForms = $false
+	    $findRange.Find.Forward = $true
+	    $findRange.Find.Wrap = 1
+	}
+	
+	$insertableTemplate.Close($false)
 }
 
 function Rubrumauslese () {
