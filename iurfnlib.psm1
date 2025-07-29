@@ -2,8 +2,15 @@
 # PowerShell functions to automate procedures in legal firms
 # -- Evgeny Fishgalov, 2025
 
+function KillHeadLessWord () {
+	Get-Process -Name WINWORD | Where-Object {
+			$_.MainWindowHandle -eq 0 -and $_.SessionId -eq $([System.Diagnostics.Process]::GetCurrentProcess().SessionId)
+		} | Stop-Process -Force
+}
+
 function insertintoword { # Bausteine
 	param ([string]$pathToInsertableTemplate)
+	KillHeadLessWord
 	$pathToInsertableTemplate = Resolve-Path -Path $pathToInsertableTemplate
 	$msword = [System.Runtime.Interopservices.Marshal]::GetActiveObject("Word.Application")
 	$activeDocument = $msword.ActiveDocument
@@ -22,6 +29,7 @@ function replaceinword { # Platzhalter
 		[string]$findText,
 		[string]$replacewithText
 	)
+	KillHeadLessWord
 	$msword = [System.Runtime.Interopservices.Marshal]::GetActiveObject("Word.Application")
 	# https://learn.microsoft.com/en-us/office/vba/api/word.find.execute
 	$MatchCase = $false
@@ -42,6 +50,7 @@ function FillSpaceholderInWord { # Bausteine mit Platzhaltern
 	[string]$findText,
 	[string]$pathToInsertableTemplate
 	)
+	KillHeadLessWord
 	$pathToInsertableTemplate = Resolve-Path -Path $pathToInsertableTemplate
 	$msword = [System.Runtime.Interopservices.Marshal]::GetActiveObject("Word.Application")
 	$activeDocument = $msword.ActiveDocument
@@ -84,6 +93,7 @@ function FillSpaceholderInWord { # Bausteine mit Platzhaltern
 
 
 function Rubrumauslese () {
+	KillHeadLessWord
 	$msword = [Runtime.Interopservices.Marshal]::GetActiveObject('Word.Application')
 	$doc = $msword.ActiveDocument
 	$documentText = $doc.Content.Text -replace '\r',[System.Environment]::Newline
@@ -101,19 +111,15 @@ function Rubrumauslese () {
 	}
 }
 
-function killheadlessword () {
-	Get-Process -Name WINWORD | Where-Object {
-			$_.MainWindowHandle -eq 0 -and $_.SessionId -eq $([System.Diagnostics.Process]::GetCurrentProcess().SessionId)
-		} | Stop-Process -Force
-}
-
 function FillFromJSON { # Platzhalter für kurze Eintragungen (bis 255 Zeichen) anhand JSON ersetzen
 
 	param(
 		[Parameter(Mandatory=$true)][string]$Selection,
 		[Parameter(Mandatory=$true)][string]$pathToJSON
 	)
-		
+	
+	KillHeadLessWord
+	
 	$json = Get-Content -Path $pathToJSON -Raw -Encoding UTF8 | ConvertFrom-Json
 
 	foreach ($entry in $json) {
@@ -131,6 +137,8 @@ function FillFromFolder { # Längere Bausteine für einige Platzhalter aus einem
 		[Parameter(Mandatory=$true)][string]$Selection,
 		[Parameter(Mandatory=$true)][string]$Folder
 	)
+	
+	KillHeadLessWord
 	
 	if (Test-Path "$Folder\$Selection") {
 		$files = Get-ChildItem -Path "$Folder\$Selection" -Include "*.docx", "*.rtf" -Recurse
