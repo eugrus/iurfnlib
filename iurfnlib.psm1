@@ -1,5 +1,5 @@
 # iurfnlib
-# PowerShell functions to automate procedures in legal firms
+# PowerShell functions to automate processes at law firms
 # -- Evgeny Fishgalov, 2025
 
 function KillHeadLessWord () {
@@ -14,7 +14,20 @@ function insertintoword { # Bausteine
 	$pathToInsertableTemplate = Resolve-Path -Path $pathToInsertableTemplate
 	$msword = [System.Runtime.Interopservices.Marshal]::GetActiveObject("Word.Application")
 	$activeDocument = $msword.ActiveDocument
-	$insertableTemplate = $msword.Documents.Open($pathToInsertableTemplate)
+	$insertableTemplate = $msword.Documents.Open( # Positional arguments (COM interop) https://learn.microsoft.com/en-us/office/vba/api/word.documents.open
+		$pathToInsertableTemplate,        # FileName
+		[ref]$false,                      # ConfirmConversions = false (no convert dialog for RTF)
+		[ref]$true,                       # ReadOnly
+		[System.Type]::Missing,           # AddToRecentFiles
+		[System.Type]::Missing,           # PasswordDocument
+		[System.Type]::Missing,           # PasswordTemplate
+		[System.Type]::Missing,           # Revert
+		[System.Type]::Missing,           # WritePasswordDocument
+		[System.Type]::Missing,           # WritePasswordTemplate
+		[System.Type]::Missing,           # Format
+		[System.Type]::Missing,           # Encoding
+		[ref]$false                       # Visible = false (hides the template)
+	)
 	$templateRange = $insertableTemplate.Content
 	$activeRange = $activeDocument.Content
 	$activeRange.Collapse([ref]0)
@@ -54,7 +67,20 @@ function FillSpaceholderInWord { # Bausteine mit Platzhaltern
 	$pathToInsertableTemplate = Resolve-Path -Path $pathToInsertableTemplate
 	$msword = [System.Runtime.Interopservices.Marshal]::GetActiveObject("Word.Application")
 	$activeDocument = $msword.ActiveDocument
-	$insertableTemplate = $msword.Documents.Open($pathToInsertableTemplate)
+	$insertableTemplate = $msword.Documents.Open( # Positional arguments (COM interop) https://learn.microsoft.com/en-us/office/vba/api/word.documents.open
+		$pathToInsertableTemplate,        # FileName
+		[ref]$false,                      # ConfirmConversions = false (no convert dialog for RTF)
+		[ref]$true,                       # ReadOnly
+		[System.Type]::Missing,           # AddToRecentFiles
+		[System.Type]::Missing,           # PasswordDocument
+		[System.Type]::Missing,           # PasswordTemplate
+		[System.Type]::Missing,           # Revert
+		[System.Type]::Missing,           # WritePasswordDocument
+		[System.Type]::Missing,           # WritePasswordTemplate
+		[System.Type]::Missing,           # Format
+		[System.Type]::Missing,           # Encoding
+		[ref]$false                       # Visible = false (hides the template)
+	)
 
 	# Get template content once
 	$templateRange = $insertableTemplate.Content
