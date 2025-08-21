@@ -27,7 +27,7 @@ function insertintoword { # Bausteine
 		[System.Type]::Missing,           # Format
 		[System.Type]::Missing,           # Encoding
 		[ref]$false                       # Visible = false (hides the template)
-	)
+		)
 	$templateRange = $insertableTemplate.Content
 	$activeRange = $activeDocument.Content
 	$activeRange.Collapse([ref]0)
@@ -42,8 +42,10 @@ function replaceinword { # Platzhalter
 		[string]$findText,
 		[string]$replacewithText
 	)
+	
 	KillHeadLessWord
 	$msword = [System.Runtime.Interopservices.Marshal]::GetActiveObject("Word.Application")
+	
 	# https://learn.microsoft.com/en-us/office/vba/api/word.find.execute
 	$MatchCase = $false
 	$MatchWholeWord = $true
@@ -54,8 +56,36 @@ function replaceinword { # Platzhalter
 	$Wrap = 1 # https://learn.microsoft.com/en-us/office/vba/api/word.wdfindwrap
 	$Format = $false
 	$Replace = 2 # = wdReplaceAll https://learn.microsoft.com/en-us/office/vba/api/word.wdreplace
+	
 	$doc = $msword.ActiveDocument
-	$doc.Content.Find.Execute($findText, $MatchCase, $MatchWholeWord, $MatchWildcards, $MatchSoundsLike, $MatchAllWordForms, $Forward, $Wrap, $Format, $replacewithText, $Replace)
+	
+	# Проверяем длину заменяемого текста
+	if ($replacewithText.Length -le 255) {
+		# Стандартная замена для строк до 255 символов
+		$doc.Content.Find.Execute($findText, $MatchCase, $MatchWholeWord, $MatchWildcards, $MatchSoundsLike, $MatchAllWordForms, $Forward, $Wrap, $Format, $replacewithText, $Replace)
+	}
+	else {
+		Write-Host "Обработка длинного текста ($($replacewithText.Length) символов)"
+		
+		# Создаем уникальный временный плейсхолдер
+		$tempPlaceholder = "§TEMP_LONG_TEXT_$([Guid]::NewGuid().ToString().Replace('-','').Substring(0,16))§"
+		
+		# Заменяем исходный текст на временный плейсхолдер
+		$doc.Content.Find.Execute($findText, $MatchCase, $MatchWholeWord, $MatchWildcards, $MatchSoundsLike, $MatchAllWordForms, $Forward, $Wrap, $Format, $tempPlaceholder, $Replace)
+		
+		# Находим плейсхолдер и заменяем его через Selection
+		$selection = $msword.Selection
+		$selection.HomeKey(6) # wdStory - переходим к началу документа
+		
+		if ($selection.Find.Execute($tempPlaceholder, $MatchCase, $MatchWholeWord, $MatchWildcards, $MatchSoundsLike, $MatchAllWordForms, $Forward, $Wrap, $Format, "", 0)) {
+			# Плейсхолдер найден, заменяем его длинным текстом
+			$selection.TypeText($replacewithText)
+			Write-Host "Замена длинного текста выполнена успешно"
+		}
+		else {
+			Write-Error "Временный плейсхолдер не найден"
+		}
+	}
 }
 
 function FillSpaceholderInWord { # Bausteine mit Platzhaltern
@@ -80,7 +110,7 @@ function FillSpaceholderInWord { # Bausteine mit Platzhaltern
 		[System.Type]::Missing,           # Format
 		[System.Type]::Missing,           # Encoding
 		[ref]$false                       # Visible = false (hides the template)
-	)
+		)
 
 	# Get template content once
 	$templateRange = $insertableTemplate.Content
