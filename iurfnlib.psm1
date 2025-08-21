@@ -65,7 +65,6 @@ function replaceinword { # Platzhalter
 		$doc.Content.Find.Execute($findText, $MatchCase, $MatchWholeWord, $MatchWildcards, $MatchSoundsLike, $MatchAllWordForms, $Forward, $Wrap, $Format, $replacewithText, $Replace)
 	}
 	else {
-		Write-Host "Обработка длинного текста ($($replacewithText.Length) символов)"
 		
 		# Создаем уникальный временный плейсхолдер
 		$tempPlaceholder = "§TEMP_LONG_TEXT_$([Guid]::NewGuid().ToString().Replace('-','').Substring(0,16))§"
@@ -80,10 +79,9 @@ function replaceinword { # Platzhalter
 		if ($selection.Find.Execute($tempPlaceholder, $MatchCase, $MatchWholeWord, $MatchWildcards, $MatchSoundsLike, $MatchAllWordForms, $Forward, $Wrap, $Format, "", 0)) {
 			# Плейсхолдер найден, заменяем его длинным текстом
 			$selection.TypeText($replacewithText)
-			Write-Host "Замена длинного текста выполнена успешно"
 		}
 		else {
-			Write-Error "Временный плейсхолдер не найден"
+			Write-Error "tmp placeholder not found"
 		}
 	}
 }
